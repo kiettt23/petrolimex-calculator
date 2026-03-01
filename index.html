@@ -1,50 +1,69 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculator</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>Phiếu Cân Gas - Petrolimex</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-    <div class="calculator">
-        <div class="display">123</div>
-        <div class="button-container">
-            <div class="row">
-                <button class="button">7</button>
-                <button class="button">8</button>
-                <button class="button">9</button>
-                <button class="button">DEL</button>
-            </div>
-            <div class="row">
-                <button class="button">4</button>
-                <button class="button">5</button>
-                <button class="button">6</button>
-                <button class="button">+</button>
-            </div>
-            <div class="row">
-                <button class="button">1</button>
-                <button class="button">2</button>
-                <button class="button">3</button>
-                <button class="button">-</button>
-            </div>
-            <div class="row">
-                <button class="button">0</button>
-                <button class="button">.</button>
-                <button class="button">/</button>
-                <button class="button">x</button>
-            </div>
-            <div class="row">
-                <button style="flex: 1;background:transparent;border:none;"></button>
-                <button style="flex: 1;background:transparent;border:none;"></button>
-                <button class="button clear" style="flex: 1;">C</button>
-                <button class="button equal" style="flex: 1;">=</button>
-            </div>
-        </div>
-    </div>
-    <script src="index.js"></script>
-</body>
+  <header class="app-header" role="banner">
+    <h1>PHIẾU CÂN GAS</h1>
+    <p>Tại trạm nạp - Gas Petrolimex</p>
+  </header>
 
+  <div class="summary-bar" id="summaryBar" role="status" aria-live="polite">
+    <div class="summary-total">
+      <span class="summary-label">Tổng gas tồn</span>
+      <span class="summary-value" id="totalGas">0</span>
+      <span class="summary-unit">kg</span>
+    </div>
+    <div class="summary-count">
+      <span id="filledCount">0</span> / <span id="totalCount">40</span> bình
+    </div>
+  </div>
+
+  <div class="form-meta no-print">
+    <div class="meta-row">
+      <label>Ngày lập phiếu</label>
+      <div class="date-picker-vn">
+        <div class="date-field">
+          <span class="date-label">Ngày</span>
+          <select id="formDay" aria-label="Ngày"></select>
+        </div>
+        <div class="date-field">
+          <span class="date-label">Tháng</span>
+          <select id="formMonth" aria-label="Tháng"></select>
+        </div>
+        <div class="date-field">
+          <span class="date-label">Năm</span>
+          <select id="formYear" aria-label="Năm"></select>
+        </div>
+      </div>
+    </div>
+    <div class="formula-hint" role="note">
+      Gas tồn = Cân toàn bộ - Trọng lượng vỏ
+    </div>
+  </div>
+
+  <div class="cylinder-list" id="cylinderList" role="list" aria-label="Danh sách bình gas"></div>
+
+  <div class="actions no-print">
+    <button class="btn btn-add" onclick="addRow()" type="button">+ Thêm bình</button>
+    <button class="btn btn-primary" onclick="printForm()" type="button">IN PHIẾU</button>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="saveData()" type="button">Lưu lại</button>
+      <button class="btn btn-secondary" onclick="exportCSV()" type="button">Xuất Excel</button>
+    </div>
+    <button class="btn btn-danger" onclick="clearAll()" type="button">Tạo phiếu mới</button>
+  </div>
+
+  <div class="print-view" id="printView"></div>
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <script src="app.js"></script>
+</body>
 </html>
