@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phieu-can-gas-v4';
+const CACHE_NAME = 'phieu-can-gas-v8';
 const FONTS_CACHE = 'google-fonts-v1';
 
 const FILES_TO_CACHE = [
@@ -8,6 +8,7 @@ const FILES_TO_CACHE = [
   './assets/icon-180.png',
   './assets/icon-192.png',
   './assets/icon-512.png',
+  './assets/logo-header.png',
   './js/constants.js',
   './js/utils.js',
   './js/storage.js',

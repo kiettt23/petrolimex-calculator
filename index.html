@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +12,8 @@
   <link rel="apple-touch-icon" href="assets/icon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <title>Phiếu Cân Gas - Petrolimex</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
@@ -23,12 +25,16 @@
   <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="css/print.css">
 </head>
+
 <body>
   <div class="offline-bar" id="offlineBar">Không có kết nối mạng</div>
 
   <header class="app-header" role="banner">
-    <h1>PHIẾU CÂN GAS</h1>
-    <p>Tại trạm nạp - Gas Petrolimex</p>
+    <img src="assets/logo-header.png" alt="Petrolimex" class="header-logo">
+    <div class="header-text">
+      <h1>PHIẾU CÂN GAS</h1>
+      <p>Tại trạm nạp - Gas Petrolimex</p>
+    </div>
   </header>
 
   <div class="summary-bar" id="summaryBar" role="status" aria-live="polite">
@@ -67,21 +73,31 @@
 
   <div class="cylinder-list" id="cylinderList" role="list" aria-label="Danh sách bình gas"></div>
 
+  <div class="add-row-wrap no-print">
+    <button class="btn btn-add" onclick="addRow()" type="button">+ Thêm bình mới</button>
+  </div>
+
+  <hr class="section-divider no-print">
+
   <div class="auto-save-hint no-print" role="status" aria-live="polite">
-    <span class="auto-save-dot"></span> Tự động lưu
+    <span class="auto-save-dot"></span> Dữ liệu tự động lưu
   </div>
 
   <div class="actions no-print">
-    <button class="btn btn-install" id="btnInstall" onclick="installApp()" type="button" style="display:none">Cài ứng dụng lên màn hình</button>
-    <button class="btn btn-add" onclick="addRow()" type="button">+ Thêm bình mới</button>
-    <button class="btn btn-primary" onclick="printForm()" type="button">In phiếu ra giấy</button>
+    <!-- Nhóm xem / xuất -->
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="showHistory()" type="button">Xem phiếu cũ</button>
-      <button class="btn btn-secondary" onclick="exportCSV()" type="button">Tải file Excel</button>
+      <button class="btn btn-primary" onclick="showHistory()" type="button">Xem phiếu cũ</button>
+      <button class="btn btn-install" onclick="exportCSV()" type="button">Tải file Excel</button>
     </div>
+
+    <!-- Hành động in -->
+    <button class="btn btn-secondary" onclick="printForm()" type="button">In phiếu ra giấy</button>
+
     <button class="btn btn-danger" onclick="clearAll()" type="button">Xóa hết, làm phiếu mới</button>
-    <!-- DEV: xóa nút này sau khi test xong -->
+
+    <!-- Dev & install -->
     <button class="btn btn-dev" onclick="fillRandomData()" type="button">Điền dữ liệu test ngẫu nhiên</button>
+    <button class="btn btn-dev" id="btnInstall" onclick="installApp()" type="button" style="display:none">Cài ứng dụng lên màn hình</button>
   </div>
 
   <div class="history-modal" id="historyModal" role="dialog" aria-label="Phiếu đã lưu">
@@ -111,4 +127,5 @@
 
   <script type="module" src="js/main.js"></script>
 </body>
+
 </html>

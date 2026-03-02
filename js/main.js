@@ -23,9 +23,14 @@ window.fillRandomData = fillRandomData;
 
 /* ========== PWA Service Worker ========== */
 function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => { /* ignore */ });
+  if (!('serviceWorker' in navigator)) return;
+  const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+  if (isLocal) {
+    /* Unregister any existing SW on localhost so Live Server always serves fresh files */
+    navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    return;
   }
+  navigator.serviceWorker.register('./sw.js').catch(() => { /* ignore */ });
 }
 
 /* ========== PWA Install Prompt ========== */

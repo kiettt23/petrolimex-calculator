@@ -5,6 +5,7 @@
   flex-direction: column;
   gap: 10px;
 }
+
 .cylinder-card {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -13,6 +14,7 @@
   border-left: 4px solid var(--border);
   transition: border-color 0.2s ease;
 }
+
 .cylinder-card.has-data {
   border-left-color: var(--plx-orange);
 }
@@ -24,6 +26,7 @@
   align-items: center;
   margin-bottom: 14px;
 }
+
 .card-number {
   background: var(--plx-navy);
   color: white;
@@ -37,6 +40,7 @@
   font-size: 0.94rem;
   flex-shrink: 0;
 }
+
 .card-result {
   font-size: 1.44rem;
   font-weight: 700;
@@ -45,10 +49,12 @@
   flex: 1;
   padding: 0 12px;
 }
+
 .card-result .unit {
   font-size: 0.89rem;
   font-weight: 500;
 }
+
 .card-result.empty {
   color: var(--text-muted);
   font-size: 1rem;
@@ -71,6 +77,7 @@
   transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
+
 .card-delete:active {
   background: var(--red-100);
   color: var(--red-700);
@@ -83,8 +90,15 @@
   gap: 10px;
   margin-bottom: 10px;
 }
-.input-row:last-child { margin-bottom: 0; }
-.input-group { flex: 1; }
+
+.input-row:last-child {
+  margin-bottom: 0;
+}
+
+.input-group {
+  flex: 1;
+}
+
 .input-group label {
   display: block;
   font-size: 0.83rem;
@@ -92,6 +106,7 @@
   margin-bottom: 6px;
   font-weight: 600;
 }
+
 .input-group input {
   width: 100%;
   padding: 14px 12px;
@@ -107,12 +122,14 @@
   appearance: none;
   font-family: inherit;
 }
+
 .input-group input:focus {
   outline: none;
   border-color: var(--plx-navy);
   background: var(--plx-navy-50);
   box-shadow: 0 0 0 3px rgba(27, 36, 105, 0.12);
 }
+
 .input-group input::placeholder {
   color: #cbd5e1;
   font-size: 0.89rem;
@@ -122,9 +139,11 @@
 .cylinder-card.gas-negative {
   border-left-color: var(--red-700);
 }
+
 .card-result.negative {
   color: var(--red-700);
 }
+
 .gas-warn {
   font-size: 0.83rem;
   color: var(--red-700);
@@ -143,7 +162,26 @@
   font-weight: 600;
   display: none;
 }
-.duplicate-warn.show { display: block; }
+
+.duplicate-warn.show {
+  display: block;
+}
+
+/* ========== Add Row Button (below cylinder list) ========== */
+.add-row-wrap {
+  padding: 4px 12px 12px;
+}
+
+.add-row-wrap .btn-add {
+  width: 100%;
+}
+
+/* ========== Section Divider ========== */
+.section-divider {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 20px 12px;
+}
 
 /* ========== Action Buttons ========== */
 .actions {
@@ -152,6 +190,7 @@
   flex-direction: column;
   gap: 10px;
 }
+
 .btn {
   padding: 16px 20px;
   border: none;
@@ -168,10 +207,12 @@
   -webkit-tap-highlight-color: transparent;
   font-family: inherit;
 }
+
 .btn:active {
   opacity: 0.85;
   transform: scale(0.98);
 }
+
 /* Primary: Orange */
 .btn-primary {
   background: var(--plx-orange);
@@ -181,18 +222,21 @@
   font-weight: 700;
   box-shadow: 0 4px 14px rgba(232, 88, 32, 0.28);
 }
+
 /* Secondary: Navy tint */
 .btn-secondary {
   background: var(--plx-navy-50);
   color: var(--plx-navy);
   border: 1.5px solid var(--plx-navy-100);
 }
+
 /* Danger: Red border on white */
 .btn-danger {
   background: #fff;
   color: var(--red-700);
   border: 1.5px solid var(--red-100);
 }
+
 /* Add: Dashed navy border */
 .btn-add {
   background: var(--bg-card);
@@ -200,11 +244,15 @@
   border: 2px dashed var(--plx-navy-100);
   min-height: 50px;
 }
+
 .btn-row {
   display: flex;
   gap: 10px;
 }
-.btn-row .btn { flex: 1; }
+
+.btn-row .btn {
+  flex: 1;
+}
 
 /* ========== Install Button ========== */
 .btn-install {
@@ -218,7 +266,7 @@
 .btn-dev {
   background: transparent;
   color: var(--text-muted);
-  border: 1.5px dashed var(--border);
+  border: 1.5px dashed var(--text-muted);
   font-size: 0.83rem;
   min-height: 44px;
 }
@@ -234,6 +282,7 @@
   color: var(--text-muted);
   font-weight: 500;
 }
+
 .auto-save-dot {
   width: 7px;
   height: 7px;
