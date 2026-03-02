@@ -215,7 +215,7 @@ Lộ trình phát triển dài hạn cho ứng dụng Phiếu Cân Gas Petrolime
 ### Technical Debt
 | Issue | Severity | Plan |
 |-------|----------|------|
-| app.js 638 LOC | Medium | Split modules in v2.0 |
+| ~~app.js 638 LOC~~ | ~~Medium~~ | ✓ Split thành 9 modules (v1.2) |
 | Inline HTML strings | Medium | Component library in v2.0 |
 | No unit tests | High | Add in v1.1 |
 | No CI/CD | Medium | Setup in v2.0 |
@@ -350,6 +350,19 @@ v2.1+ (Advanced)
 - iOS/Android support
 - localStorage persistence
 - Print & export
+
+### v1.2.0 (Released 02/03/2026)
+- Refactor: tách `app.js` → 9 ES modules, `styles.css` → 8 CSS files
+- Fix #1: Google Fonts cached offline (network-first strategy)
+- Fix #2: Validate ngày hợp lệ theo tháng/năm
+- Fix #3: Hiển thị cảnh báo + viền đỏ khi gas âm
+- Fix #5: Giới hạn tối đa 100 bình
+- Fix #6: Cache tare DB trong memory, tránh JSON.parse mỗi lần gõ
+- Fix #7: O(n) duplicate check bằng frequency map
+- Fix #9: Thay `window.confirm()` bằng custom confirm modal
+- Fix #10: `clearAll()` giữ nguyên số bình hiện tại
+- Fix #11: Hiển thị offline indicator khi mất mạng
+- Fix #15: Manifest maskable icon cho Android
 
 ### v1.1.0 (Planned Q2 2026)
 - Dark mode

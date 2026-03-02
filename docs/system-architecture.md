@@ -5,382 +5,224 @@
 ```
 ┌─────────────────────────────────────────────┐
 │     Presentation Layer (HTML/CSS)           │
-│  - Header, Summary Bar, Input Cards, Modal  │
+│  index.html + css/* (8 modules)             │
 └──────────────────┬──────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────┐
-│     Business Logic Layer (JavaScript)       │
-│  - State Management, Calculations, Events   │
+│     Business Logic Layer (JS Modules)       │
+│  js/main.js → handlers, history, print      │
+│           → render → state → storage        │
 └──────────────────┬──────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────┐
 │     Data Layer (localStorage)               │
-│  - State Persistence, Tare DB, History      │
+│  State Persistence, Tare DB, History        │
 └─────────────────────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────┐
 │     Offline Layer (Service Worker)          │
-│  - Cache-first Strategy, Offline Support    │
+│  Cache-first, all js/* + css/* cached       │
 └─────────────────────────────────────────────┘
 ```
 
-## Component Architecture
-
-### 1. Presentation Layer
-
-**Phần tử chính**:
-- `app-header` - Title, subtitle
-- `summary-bar` - Sticky bar, total gas + count
-- `cylinder-list` - 40 card input
-- `history-modal` - Danh sách phiếu cũ
-- `toast` - Notification
-
-**Điểm đặc biệt**:
-- Semantic HTML với ARIA roles
-- Responsive CSS Grid + Flexbox
-- Mobile-first design
-- No JS framework, pure HTML string render
+## Module Architecture (js/)
 
 ```
-HTML (index.html)
-   ↓
-CSS (styles.css) - 3 breakpoints (768px, 1024px, 1440px)
-   ↓
-JavaScript rendering (app.js renderAllCards)
+main.js (entry point)
+   ├── handlers.js     — events, row management, date picker
+   │   ├── state.js    — app state, loadData, autoSave
+   │   │   ├── storage.js  — safeSave, getHistory, tare DB
+   │   │   │   ├── constants.js
+   │   │   │   └── utils.js
+   │   │   └── constants.js
+   │   ├── render.js   — DOM rendering, duplicate check
+   │   │   ├── state.js
+   │   │   └── utils.js
+   │   ├── history.js  — history modal UI, archiveCurrentForm
+   │   │   ├── state.js, storage.js, utils.js, render.js
+   │   └── utils.js, storage.js
+   ├── history.js
+   ├── print.js        — generatePrintView, exportCSV
+   │   ├── state.js
+   │   └── utils.js
+   └── render.js
 ```
 
-### 2. Business Logic Layer
+**Không có circular dependency.**
 
-**State Container**:
+## State Container
+
 ```javascript
-state = {
-  date: "2026-03-02",
+// js/state.js — exported const, mutate properties
+const state = {
+  date: "2026-03-02",              // YYYY-MM-DD
   cylinders: [
-    { seri: "ABC123", total: 100, tare: 10 },
+    { seri: "ABC123", total: "53.3", tare: "10.5" },
     { seri: "", total: "", tare: "" },
-    ...40 items
+    // ... up to DEFAULT_ROWS (40) hoặc nhiều hơn nếu addRow()
   ]
 }
 ```
 
-**Core Functions**:
+State được export như `const` object — các module khác mutate **properties** (không reassign biến), giúp ES module live binding hoạt động đúng.
 
-| Hàm | Input | Output | Tác Dụng |
-|-----|-------|--------|----------|
-| `loadData()` | - | state | Restore từ localStorage |
-| `saveData()` | - | - | Lưu state vào localStorage |
-| `autoSave()` | - | - | Debounce save 800ms |
-| `calculateGas(total, tare)` | numbers | number | Gas = total - tare |
-| `getTotalGas()` | - | number | Sum all (total - tare) |
-| `getFilledCount()` | - | number | Count bình có seri |
-| `parseNum(v)` | string | number | Parse với dấu phẩy/chấm |
-| `saveTareWeight(seri, tare)` | string, number | - | Lưu tare theo seri |
-| `getTareWeight(seri)` | string | number | Lấy tare nếu seri trùng |
+## Event Flow Chi Tiết
 
-**Event Flow**:
+### Initialization
 ```
-User Type Input
-   ↓
-onChange/onInput event
-   ↓
-Parse & Validate
-   ↓
-Update state.cylinders[idx]
-   ↓
-Render card (updateCard or renderCard)
-   ↓
-Update summary (updateSummary)
-   ↓
-Trigger autoSave
-   ↓
-localStorage.setItem (800ms debounce)
+DOMContentLoaded [main.js]
+   ├── loadData()           — restore state từ localStorage
+   ├── initDatePicker()     — populate 3 dropdown, restore date
+   ├── renderAllCards()     — render tất cả cylinder cards
+   ├── updateSummary()      — update sticky bar
+   ├── initIOSKeyboardDismiss()
+   └── registerServiceWorker()
 ```
 
-### 3. Data Layer - localStorage
+### Input → Save
+```
+User types → oninput="onFieldInput(index, field, value)" [HTML]
+   ↓
+window.onFieldInput() → onFieldInput() [handlers.js]
+   ├── state.cylinders[index][field] = value
+   ├── updateCardResult(index)    [render.js]
+   ├── updateSummary()            [render.js]
+   ├── autoSave()                 [state.js] — debounce 800ms
+   ├── (if tare) saveTareWeight() [storage.js]
+   └── (if seri) autoFillTare() + updateDuplicateWarnings()
+```
 
-**Storage Schema**:
+### Print/Export
+```
+onclick="printForm()" → window.printForm() [main.js]
+   → printForm() [print.js]
+       ├── generatePrintView() — render HTML 2 cột vào #printView
+       └── window.print()      — browser print dialog
+
+onclick="exportCSV()" → exportCSV() [print.js]
+   ├── Build CSV string với BOM (\uFEFF)
+   ├── Blob → Object URL
+   └── <a>.click() → download
+```
+
+### History Modal
+```
+showHistory() [history.js]
+   ├── getHistory() from localStorage [storage.js]
+   ├── Render danh sách HTML vào #historyList
+   └── modal.classList.add('show')
+
+loadHistory(index) [history.js]
+   ├── archiveCurrentForm() — lưu phiếu hiện tại nếu có data
+   ├── state.date = item.date
+   ├── state.cylinders = deep copy of item.cylinders
+   ├── Update date picker UI
+   ├── renderAllCards() + updateSummary()
+   └── saveData() + closeHistory()
+```
+
+## Data Layer - localStorage
+
+**3 keys:**
 
 ```javascript
-// phieu-can-gas-data (State hiện tại)
-{
-  "date": "2026-03-02",
-  "cylinders": [
-    { "seri": "ABC123", "total": "100", "tare": "10" },
-    ...
-  ]
+// 1. State hiện tại
+localStorage['phieu-can-gas-data'] = {
+  date: "2026-03-02",
+  cylinders: [{ seri, total, tare }]
 }
 
-// phieu-can-gas-tare-db (Tare Memory)
-{
-  "ABC123": 10,
-  "DEF456": 12,
-  ...
+// 2. Tare weight memory theo seri
+localStorage['phieu-can-gas-tare-db'] = {
+  "ABC123": "10.5",
+  "DEF456": "12"
 }
 
-// phieu-can-gas-history (Lịch sử)
-[
-  { "date": "2026-02-28", "cylinders": [...], "timestamp": 1234567890 },
-  { "date": "2026-03-01", "cylinders": [...], "timestamp": 1234567891 },
-  ...max 50
+// 3. Lịch sử phiếu (max 50, newest first)
+localStorage['phieu-can-gas-history'] = [
+  { id, date, cylinders, totalGas, filledCount, savedAt }
 ]
 ```
 
-**Quota Handling**:
+**Quota Handling (safeSave):**
 ```
-Try: localStorage.setItem(key, data)
-  ├─ Success → Done
-  └─ QuotaExceeded → Delete oldest history
-                     Retry save
-                     Toast: "Bộ nhớ đầy"
+Try localStorage.setItem(key, value)
+  ├── OK → done
+  └── QuotaExceeded
+        ├── history.pop() — xóa phiếu cũ nhất
+        ├── Save history mới
+        ├── Toast "Bộ nhớ đầy"
+        └── Retry setItem
 ```
 
-**Fallback**:
-- Nếu localStorage unavailable → in-memory only
-- Dữ liệu mất khi reload (acceptable offline-first tradeoff)
+## CSS Architecture (css/)
 
-### 4. Offline Layer - Service Worker
+| File | Concern | LOC |
+|------|---------|-----|
+| `variables.css` | Design tokens (:root) | 45 |
+| `base.css` | Reset, body, header, summary | 87 |
+| `form.css` | Date picker, formula hint | 65 |
+| `components.css` | Cards, inputs, buttons | 152 |
+| `history.css` | Modal, expandable detail | 145 |
+| `toast.css` | Toast notification | 22 |
+| `responsive.css` | Breakpoints 768/1024/1440px | 60 |
+| `print.css` | @media print | 46 |
+
+Load order trong `index.html`: variables → base → form → components → history → toast → responsive → print
+
+## Service Worker (sw.js)
 
 **Strategy: Cache-First**
 
 ```
-Request
-   ↓
-Check Cache
-   ├─ Found → Return cached
-   └─ Not found → Fetch from network
-                  Cache & Return
-                  If network fails → offline
+Request → Cache hit? → Return cached
+                ↓ miss
+          Fetch network → Return
 ```
 
-**Cache Assets** (sw.js):
-- index.html
-- app.js
-- styles.css
-- manifest.json
-- icon-180.png
-- icon-192.png
-- icon-512.png
+**Cache version:** `phieu-can-gas-v3`
 
-**Update Strategy**:
-- No auto-update (manual refresh required)
-- User controls cache expiry
-- Simple & predictable
+**Cached assets:** index.html, manifest.json, assets/*, js/* (9 files), css/* (8 files)
 
-## Data Flow Diagrams
+Khi deploy code mới → bump `CACHE_NAME` version → service worker activate xóa cache cũ.
 
-### Initialization Flow
-```
-DOMContentLoaded
-   ├─ registerServiceWorker()
-   ├─ loadData() → restore state from localStorage
-   ├─ initDatePicker() → populate dropdowns
-   ├─ initIOSKeyboardDismiss() → touch listener
-   └─ renderAllCards() → render 40 cards + updateSummary()
-```
+## Inline Handler Pattern
 
-### Input → Save Flow
-```
-User types in seri input
-   ↓
-onInput event → saveTareWeight(seri, tare)
-   ↓
-Validate duplicate → showToast if duplicate
-   ↓
-state.cylinders[idx].seri = value
-   ↓
-autoSave() debounce 800ms
-   ↓
-safeSave(STORAGE_KEY, JSON.stringify(state))
-   ↓
-localStorage.setItem() || handle QuotaExceeded
-```
+Vì HTML dùng `onclick="addRow()"` trong string templates, các functions cần expose lên `window`:
 
-### Print/Export Flow
-```
-User clicks "In phiếu"
-   ↓
-printForm()
-   ├─ Render HTML print-view
-   ├─ Populate date, cylinders, gas values
-   └─ CSS @media print { .no-print { display:none } }
-   ↓
-window.print() → Browser print dialog
-```
-
-## State Mutation Patterns
-
-### Full Re-render (Structural Changes)
-Khi thêm/xóa bình → render lại tất cả:
 ```javascript
-addRow() {
-  state.cylinders.push({ seri: '', total: '', tare: '' });
-  renderAllCards(); // Full re-render
-  updateSummary();
-  autoSave();
-}
-
-removeRow(idx) {
-  state.cylinders.splice(idx, 1);
-  renderAllCards(); // Full re-render
-  updateSummary();
-  autoSave();
-}
+// js/main.js
+window.addRow = addRow;
+window.onFieldInput = onFieldInput;
+// ... tất cả public functions
 ```
 
-### Surgical Update (Input Changes)
-Khi user type → update card riêng:
-```javascript
-function onSeriChange(idx, value) {
-  state.cylinders[idx].seri = value;
-  // Có thể update only card thay vì full render
-  updateSummary();
-  autoSave();
-}
-```
-
-**Note**: Hiện tại dùng full render cho simplicity.
-Nếu performance issue → optimize với updateCard(idx)
-
-## Module Boundaries
-
-| Module | Dòng | Trách Nhiệm |
-|--------|------|------------|
-| State | 1-20 | Constants, state definition |
-| Init | 14-21 | Setup, DOMContentLoaded |
-| PWA | 24-28 | Service worker registration |
-| iOS | 31-37 | Keyboard dismiss |
-| DatePicker | 40-82 | 3 dropdown initialization |
-| DataPersistence | 84-147 | Load/save, localStorage |
-| Tare | 131-146 | saveTareWeight, getTareWeight |
-| Calculation | 148-170 | parseNum, calculateGas |
-| Rendering | 172-250 | renderAllCards, renderCard |
-| Summary | 252-270 | updateSummary |
-| History | 272-350 | getHistory, saveHistory, showHistory |
-| Actions | 352-450 | addRow, removeRow, clearAll |
-| Print/Export | 452-550 | printForm, exportCSV |
-| Validation | 552-580 | validateDuplicate |
-| Utils | 582-638 | showToast, initIOSKeyboardDismiss |
-
-## Performance Optimization
-
-### 1. Debounced Auto-save
-```javascript
-let autoSaveTimer;
-function autoSave() {
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(() => saveData(), 800);
-}
-// Effect: Reduce localStorage writes from 40/s → 1.25/s on fast typing
-```
-
-### 2. Vanilla JS (No Framework)
-- No React/Vue overhead
-- Direct DOM manipulation
-- Faster initial load
-
-### 3. CSS GPU Acceleration
-```css
-.summary-bar {
-  position: sticky; /* Hardware accelerated */
-  will-change: transform; /* Hint to browser */
-}
-```
-
-### 4. Lazy Service Worker
-- Async registration
-- Non-blocking
-- Doesn't delay app load
-
-## Error Handling Strategy
-
-### localStorage Quota Exceeded
-```javascript
-safeSave(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch (e) {
-    // Delete oldest history, retry
-    if (getHistory().length > 0) {
-      history.pop();
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-      safeSave(key, value); // Retry
-    }
-  }
-}
-```
-
-### JSON Parse Errors
-```javascript
-try {
-  const db = JSON.parse(localStorage.getItem(TARE_DB_KEY) || '{}');
-  return db[seri.trim()] || null;
-} catch {
-  return null; // Safe fallback
-}
-```
-
-### Invalid Input
-```javascript
-function parseNum(v) {
-  if (!v && v !== 0) return NaN;
-  const num = parseFloat(String(v).trim().replace(/,/g, '.'));
-  return isNaN(num) ? NaN : num;
-}
-```
+Đây là trade-off để giữ HTML template đơn giản mà không cần event delegation phức tạp.
 
 ## Scalability Considerations
 
-### Current Limitations
-- Max 40 cylinders (configurable DEFAULT_ROWS)
-- Max 50 history (configurable MAX_HISTORY)
-- 5MB localStorage limit (browser limit)
-- Single device, no sync
+### Hiện tại
+- Max 50 history entries (configurable `MAX_HISTORY`)
+- Default 40 bình (configurable `DEFAULT_ROWS`)
+- ~5MB localStorage limit
 
-### If Need to Scale
-1. **More data** → Server backend + sync
-2. **Multiple users** → Authentication + multi-device
-3. **Richer features** → Consider framework (React/Vue)
-4. **Offline-first** → Encrypt + replicate localStorage
-
-## Accessibility (a11y)
-
-**Semantic HTML**:
-- `role="banner"` header
-- `role="status"` summary bar
-- `role="list"` cylinder list
-- `role="dialog"` modal
-- `role="alert"` toast
-
-**ARIA Live Regions**:
-```html
-<div role="status" aria-live="polite">
-  Tự động lưu
-</div>
-```
-
-**Touch Targets**: >= 44px (iOS/Android standard)
-
-**Keyboard Navigation**: Tab through inputs, form.submit
-
-## Monitoring & Logging
-
-**No built-in monitoring**. To add:
-- Browser console.log (dev)
-- Error tracking (Sentry, LogRocket)
-- Analytics (Google Analytics)
-- localStorage usage monitor
+### Nếu cần scale
+1. **Nhiều user, nhiều thiết bị** → Backend API + JWT auth + sync
+2. **Nhiều data hơn** → IndexedDB thay localStorage
+3. **Feature phức tạp hơn** → Consider framework (Vue/React)
+4. **Audit trail** → Server-side logging
 
 ## Technology Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| Vanilla JS | No framework overhead, simple offline-first |
-| localStorage | Built-in browser API, no server dependency |
-| Service Worker cache-first | Instant offline, predictable |
-| CSS Grid | Modern, responsive, no library needed |
-| HTML string render | Simpler than shadow DOM or components |
-| No build step | Direct execution, no dev environment |
+| Quyết định | Lý do |
+|-----------|-------|
+| Vanilla JS, no framework | Không overhead, đơn giản, offline-first |
+| Native ES Modules | Tách module không cần build step |
+| localStorage | Browser built-in, không cần server |
+| Cache-first SW | Offline ngay lập tức, predictable |
+| CSS custom properties | Theming dễ, không cần preprocessor |
+| No build step | Deploy trực tiếp, không cần Node.js |
 
 ---
 
-**Phiên Bản**: 1.0 | **Cập Nhật**: 02/03/2026
+**Phiên Bản**: 1.1 | **Cập Nhật**: 02/03/2026

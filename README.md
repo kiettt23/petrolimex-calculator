@@ -15,7 +15,9 @@
 - **Xuất Excel**: CSV UTF-8 BOM cho Excel
 - **Offline**: PWA cache-first, hoàn toàn offline
 - **Thập phân**: Hỗ trợ dấu phẩy hoặc chấm
-- **Cảnh báo**: Nhất cảnh báo trùng số seri
+- **Cảnh báo**: Cảnh báo trùng số seri + cảnh báo gas âm
+- **Offline indicator**: Hiển thị banner khi mất mạng
+- **Giới hạn bình**: Tối đa 100 bình/phiếu
 
 ## Tech Stack
 
@@ -28,15 +30,34 @@
 ## Cấu Trúc Tệp
 
 ```
-├── index.html         # HTML structure (90 LOC)
-├── app.js             # Main logic (638 LOC)
-├── styles.css         # Styling (765 LOC)
-├── sw.js              # Service worker (36 LOC)
-├── manifest.json      # PWA manifest (14 LOC)
-├── icon-180.png       # Apple touch icon
-├── icon-192.png       # Android home screen icon
-├── icon-512.png       # Splash screen icon (Petrolimex 2026 logo)
-└── docs/              # Documentation
+├── index.html              # HTML structure (90 LOC)
+├── sw.js                   # Service worker (46 LOC)
+├── manifest.json           # PWA manifest (14 LOC)
+├── assets/
+│   ├── icon-180.png        # Apple touch icon
+│   ├── icon-192.png        # Android home screen
+│   └── icon-512.png        # Splash screen (Petrolimex 2026 logo)
+├── js/                     # ES Modules (native, no build)
+│   ├── constants.js        # App-wide constants
+│   ├── utils.js            # Pure functions + showToast
+│   ├── storage.js          # localStorage operations
+│   ├── state.js            # App state + persistence
+│   ├── render.js           # DOM rendering
+│   ├── history.js          # History modal UI
+│   ├── print.js            # Print + CSV export
+│   ├── handlers.js         # Event handlers + row management
+│   └── main.js             # Entry point, window exports
+├── css/                    # Modular CSS (9 files)
+│   ├── variables.css       # Design tokens (:root)
+│   ├── base.css            # Reset, header, summary bar, offline bar
+│   ├── form.css            # Date picker, formula hint
+│   ├── components.css      # Cards, inputs, buttons, gas-negative
+│   ├── confirm.css         # Custom confirm modal
+│   ├── history.css         # History modal
+│   ├── toast.css           # Toast notification
+│   ├── responsive.css      # Breakpoints 768/1024/1440px
+│   └── print.css           # @media print
+└── docs/                   # Documentation
 ```
 
 ## Bắt Đầu
@@ -70,10 +91,15 @@ Xem chi tiết tại [`docs/project-roadmap.md`](./docs/project-roadmap.md)
 - [`docs/system-architecture.md`](./docs/system-architecture.md) - Kiến trúc hệ thống
 - [`docs/design-guidelines.md`](./docs/design-guidelines.md) - Hướng dẫn design
 
-## Hỗ Trợ
+## Onboard Developer Mới
 
-Mỗi hàm chính được chia thành các section với comment rõ ràng. Xem `app.js` để hiểu flow.
+1. Đọc [`docs/project-overview-pdr.md`](./docs/project-overview-pdr.md) — hiểu mục tiêu
+2. Đọc [`docs/codebase-summary.md`](./docs/codebase-summary.md) — hiểu từng module
+3. Đọc [`docs/system-architecture.md`](./docs/system-architecture.md) — hiểu data flow
+4. Mở `index.html` trong browser, bắt đầu debug với DevTools
+
+Mỗi module JS có comment section rõ ràng. Xem `js/main.js` để hiểu init flow.
 
 ---
 
-**Tạo**: 02/03/2026 | **Framework**: Vanilla JS | **Phiên Bản**: 1.0.0
+**Tạo**: 02/03/2026 | **Framework**: Vanilla JS | **Phiên Bản**: 1.2.0

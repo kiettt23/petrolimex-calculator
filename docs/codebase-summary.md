@@ -4,278 +4,173 @@
 
 ```
 petrolimex-calculator/
-├── index.html              # Cấu trúc HTML (90 LOC)
-├── app.js                  # Logic ứng dụng chính (638 LOC)
-├── styles.css              # Styling (765 LOC)
-├── sw.js                   # Service Worker (36 LOC)
+├── index.html              # HTML structure (90 LOC)
+├── sw.js                   # Service Worker (46 LOC)
 ├── manifest.json           # PWA manifest (14 LOC)
-├── icon-180.png            # Apple touch icon
-├── icon-192.png            # Android home screen icon
-├── icon-512.png            # Splash screen icon (Petrolimex 2026 logo)
+├── README.md
+├── assets/
+│   ├── icon-180.png        # Apple touch icon
+│   ├── icon-192.png        # Android home screen icon
+│   └── icon-512.png        # Splash screen icon
+├── js/                     # ES Modules (native, no build)
+│   ├── constants.js        # App-wide constants (6 LOC)
+│   ├── utils.js            # Pure functions + showToast (47 LOC)
+│   ├── storage.js          # localStorage operations (44 LOC)
+│   ├── state.js            # App state + persistence (38 LOC)
+│   ├── render.js           # DOM rendering (103 LOC)
+│   ├── history.js          # History modal UI (110 LOC)
+│   ├── print.js            # Print + CSV export (80 LOC)
+│   ├── handlers.js         # Event handlers + row management (115 LOC)
+│   └── main.js             # Entry point + window exports (37 LOC)
+├── css/                    # Modular CSS
+│   ├── variables.css       # CSS custom properties (45 LOC)
+│   ├── base.css            # Reset, body, header, summary bar (87 LOC)
+│   ├── form.css            # Date picker, formula hint (65 LOC)
+│   ├── components.css      # Cards, inputs, buttons, auto-save (152 LOC)
+│   ├── history.css         # History modal (145 LOC)
+│   ├── toast.css           # Toast + print-view hidden (22 LOC)
+│   ├── responsive.css      # Media queries (60 LOC)
+│   └── print.css           # @media print (46 LOC)
 └── docs/                   # Tài liệu
 ```
 
-**Tổng LOC**: ~1,543 | **Phụ Thuộc**: 0 | **Framework**: Vanilla JS | **Build**: Không
+**Tổng LOC JS**: ~580 (9 modules) | **Tổng LOC CSS**: ~622 (8 files)
+**Phụ Thuộc**: 0 | **Framework**: Vanilla JS | **Build**: Không cần
 
-## app.js (638 LOC) - Logic Chính
+## Module Dependencies (js/)
 
-### State Management
-- `STORAGE_KEY`, `TARE_DB_KEY`, `HISTORY_KEY` - localStorage keys
-- `DEFAULT_ROWS` = 40 bình
-- `MAX_HISTORY` = 50 phiếu
-- `state` = `{ date, cylinders: [] }`
-
-### Initialization
-- `DOMContentLoaded` → `loadData()`, `initDatePicker()`, `renderAllCards()`, `updateSummary()`, `registerServiceWorker()`
-- Service worker registration
-- iOS keyboard dismiss listener
-
-### Data Persistence
-**loadData()** - Tải dữ liệu từ localStorage
-- Restore state nếu có, nếu không tạo 40 dòng trống
-
-**safeSave(key, value)** - Lưu an toàn
-- Try-catch localStorage.setItem
-- Nếu quota đầy, xóa phiếu cũ nhất, retry
-- Toast "Bộ nhớ đầy"
-
-**autoSave()** - Auto-save debounce 800ms
-- Throttle lưu liên tục
-
-**saveData()** - Lưu state hiện tại
-
-### Tare Weight Memory
-**saveTareWeight(seri, tare)** - Lưu trọng lượng vỏ theo seri
-**getTareWeight(seri)** - Lấy tare nếu seri trùng
-- Key: seri, Value: tare number
-
-### Vietnamese Date Picker
-**initDatePicker()** - Setup 3 dropdown
-- Days 1-31, Months 1-12, Years (current ±2)
-- Restore state hoặc set hôm nay
-- On change → format YYYY-MM-DD, autoSave
-
-### Calculation
-**parseNum(v)** - Parse số, hỗ trợ dấu phẩy/chấm
-- "10,5" → 10.5
-- "10.5" → 10.5
-- Empty → NaN
-
-**calculateGas(total, tare)** - Gas = total - tare
-**getFilledCount()** - Đếm bình có seri
-**getTotalGas()** - Tổng gas = sum of all (total - tare)
-
-### Rendering
-**renderAllCards()** - Render 40 card input
-- Inline event handlers
-- Uncontrolled inputs
-- Gas calculated on blur
-
-**renderCard(cyl, idx)** - HTML template cho 1 bình
-- Seri input → saveTare, validate duplicate
-- Total input → calculateGas, autoSave
-- Tare input → calculateGas, autoSave
-- Delete button → removeRow
-- Display gas = total - tare
-
-**updateSummary()** - Update sticky bar
-- totalGas, filledCount / totalCount
-
-### History
-**getHistory()** - Lấy history array từ localStorage
-**saveHistory()** - Save phiếu hiện tại vào history
-- Thêm `{ date, cylinders, timestamp }`
-- Giữ max 50
-
-**showHistory()** - Modal danh sách phiếu cũ
-**loadHistory(idx)** - Tải phiếu cũ vào state
-**deleteHistory(idx)** - Xóa phiếu từ history
-**closeHistory()** - Đóng modal
-
-### Actions
-**addRow()** - Thêm bình mới (max 100)
-**removeRow(idx)** - Xóa bình
-**clearAll()** - Xóa hết, tạo 40 dòng mới, confirm
-**printForm()** - In phiếu
-**exportCSV()** - Xuất CSV
-**showToast(msg)** - Toast notification
-
-### Validation
-**validateDuplicate(seri)** - Cảnh báo seri trùng
-- Check cylinders array
-- Toast warning
-
-### Print & Export
-**printForm()** - Render HTML print view
-- Layout 2 cột
-- Header, date, gas table
-- 5 chữ ký box
-- CSS `@media print`
-
-**exportCSV()** - CSV UTF-8 BOM
-- Headers: Seri, Cân Toàn Bộ, Trọng Lượng Vỏ, Gas Tồn
-- BOM: `\uFEFF`
-- Download filename: `phieu-can-gas-{date}.csv`
-
-### Utils
-**showToast(msg)** - Toast 2 giây
-**initIOSKeyboardDismiss()** - Tap ngoài dismiss keyboard
-
-## styles.css (765 LOC) - Styling
-
-### Variables & Reset
-- CSS variables: `--primary`, `--accent`, `--text`, `--bg`
-- Petrolimex colors (2026 rebrand): Innovative Blue #1B2469, Orange #E85820, Dark #0d4f66
-- Reset margin/padding, box-sizing: border-box
-
-### Layout
-**Mobile-first responsive**
-- 320px base (mobile)
-- 768px breakpoint (tablet 1 col)
-- 1024px breakpoint (desktop 2 col grid)
-- 1440px breakpoint (3 col grid)
-
-**Sticky header** - app-header fixed
-**Sticky summary bar** - summary-bar sticky top
-**Auto-save indicator** - dot animation
-**Toast** - fixed position, animation slide-in/out
-
-### Components
-- Header - title, subtitle
-- Summary bar - total gas, count
-- Date picker - 3 select boxes
-- Cylinder card - input layout
-- Buttons - primary, secondary, danger, add
-- Modal - history panel
-- Print view - 2 column layout
-
-### Print Styles
-`@media print`
-- Hide buttons, modal, toast
-- Show print view
-- Page break rules
-- Optimize for paper
-
-### Responsive Design
-- **Mobile (320px)**: 1 column, single-column layout
-- **Tablet (768px)**: 2 col grid, larger touch targets
-- **Desktop (1024px+)**: 3 col grid, optimize screen space
-
-## index.html (87 LOC) - Structure
-
-### Semantic HTML
-- `<header role="banner">` - App header
-- `<div role="status">` - Summary bar
-- `<div role="list">` - Cylinder list
-- `<div role="dialog">` - History modal
-- `<div role="alert">` - Toast
-
-### Accessibility
-- `aria-label`, `aria-live`, `aria-label` attributes
-- `role` attributes cho context
-- Semantic form elements
-
-### PWA Meta Tags
-- `<meta name="apple-mobile-web-app-capable">`
-- `<meta name="theme-color">`
-- `<meta name="viewport">`
-- `<link rel="manifest">`
-- `<link rel="apple-touch-icon">`
-
-## sw.js (36 LOC) - Service Worker
-
-**Strategy**: Cache-first
-- Cache assets on install
-- Serve from cache first
-- Fall back to network
-- No cache updates (manual refresh)
-
-**Cache List**:
-- index.html
-- app.js
-- styles.css
-- manifest.json
-- icon-180.png
-- icon-192.png
-- icon-512.png
-
-## manifest.json (14 LOC) - PWA
-
-```json
-{
-  "name": "Phiếu Cân Gas - Petrolimex",
-  "short_name": "Cân Gas",
-  "start_url": "./",
-  "display": "standalone",
-  "theme_color": "#0d4f66",
-  "background_color": "#f0f9fe",
-  "icons": [
-    { "src": "icon-180.png", "sizes": "180x180" },
-    { "src": "icon-192.png", "sizes": "192x192" },
-    { "src": "icon-512.png", "sizes": "512x512" }
-  ]
-}
+```
+constants.js ← storage.js, state.js
+utils.js     ← storage.js, render.js, history.js, print.js, handlers.js
+storage.js   ← state.js, history.js, handlers.js
+state.js     ← render.js, history.js, handlers.js, print.js, main.js
+render.js    ← history.js, handlers.js, main.js
+history.js   ← handlers.js, main.js
+print.js     ← main.js
+handlers.js  ← main.js
 ```
 
-**Purpose**: Make it installable on home screen
+Không có circular dependency.
+
+## Mô Tả Từng Module
+
+### js/constants.js
+App-wide constants:
+- `STORAGE_KEY`, `TARE_DB_KEY`, `HISTORY_KEY` — localStorage keys
+- `DEFAULT_ROWS` = 40, `MAX_HISTORY` = 50
+
+### js/utils.js
+Pure utility functions:
+- `parseNum(v)` — parse số, hỗ trợ dấu phẩy/chấm
+- `calcGas(c)` — gas = total - tare (round 2 decimals)
+- `escapeHTML(str)` — XSS prevention
+- `formatDateVN(dateStr)` — "2026-03-02" → "2/3/2026"
+- `formatTimeVN(isoStr)` — ISO → "HH:mm"
+- `showToast(message)` — Toast notification 2.5s
+- `showConfirm(message)` — Promise-based custom confirm modal (thay thế `window.confirm()`)
+
+### js/storage.js
+Tất cả localStorage operations:
+- `safeSave(key, value)` — save với quota fallback (xóa history cũ)
+- `getHistory()`, `saveHistory(history)` — đọc/ghi history array
+- `saveTareWeight(seri, tare)`, `getTareWeight(seri)` — tare DB
+
+### js/state.js
+App state và persistence:
+- `state` — `{ date, cylinders: [{ seri, total, tare }] }` (exported const, mutate properties)
+- `createEmptyRows(count)` — tạo N dòng trống
+- `loadData()` — restore từ localStorage
+- `saveData()`, `autoSave()` — lưu state (debounce 800ms)
+
+### js/render.js
+Tất cả DOM rendering:
+- `checkDuplicate(seri, index)` — check seri trùng
+- `updateDuplicateWarnings()` — update warning tất cả cards
+- `createCard(index)`, `buildCardHTML(...)` — tạo card element
+- `renderAllCards()` — render lại toàn bộ danh sách
+- `updateCardResult(index)` — update kết quả gas 1 card
+- `updateSummary()` — update sticky summary bar
+
+### js/history.js
+History modal UI:
+- `archiveCurrentForm()` — lưu phiếu hiện tại vào history
+- `showHistory()` — mở modal, render danh sách
+- `toggleHistoryDetail(index)` — expand/collapse chi tiết
+- `closeHistory()` — đóng modal
+- `loadHistory(index)` — async, tải phiếu cũ vào state (confirm bằng `showConfirm`)
+- `deleteHistory(index)` — async, xóa phiếu khỏi history (confirm bằng `showConfirm`)
+
+### js/print.js
+In và xuất dữ liệu:
+- `generatePrintView()` — render HTML bảng 2 cột cho in
+- `printForm()` — gọi window.print()
+- `exportCSV()` — xuất CSV UTF-8 BOM
+
+### js/handlers.js
+Event handlers và quản lý bình:
+- `onFieldInput(index, field, value)` — xử lý input thay đổi
+- `onEnterKey(event, index, field)` — Enter key navigation
+- `autoFillTare(index, seri)` — tự điền tare từ DB
+- `addRow()`, `removeRow(index)`, `clearAll()` — quản lý bình
+- `initDatePicker()` — setup 3 dropdown ngày/tháng/năm
+- `initIOSKeyboardDismiss()` — touch listener dismiss keyboard
+
+### js/main.js
+Entry point:
+- Import và expose tất cả public functions lên `window.*` cho inline HTML handlers
+- `registerServiceWorker()`
+- `initOfflineIndicator()` — lắng nghe sự kiện `online`/`offline`, hiển thị offline bar
+- `DOMContentLoaded` init sequence
 
 ## Data Flow
 
 ```
-User Input (seri, total)
+User Input (seri/total/tare)
        ↓
-onChange Event Handler
+onFieldInput() [handlers.js]
        ↓
-parseNum() → calculateGas()
+updateCardResult() + updateSummary() [render.js]
        ↓
-Update DOM + state
+autoSave() debounce 800ms [state.js]
        ↓
-autoSave() (debounce 800ms)
+safeSave() [storage.js]
        ↓
-localStorage safeSave()
-       ↓
-updateSummary()
+localStorage.setItem()
 ```
 
-## Key Design Patterns
+## localStorage Schema
 
-| Pattern | Lokasi | Tujng |
-|---------|--------|-------|
-| Full Re-render | renderAllCards() | Thay đổi structure |
-| Surgical Patch | renderCard() update | Input thường xuyên |
-| Debounce | autoSave() 800ms | Giảm I/O |
-| Try-Catch | safeSave(), getTareWeight() | Error handling |
-| Inline Handlers | HTML string events | Simplicity |
-| Section Comments | `/* ===== ... =====` | Module boundaries |
+```js
+// phieu-can-gas-data — state hiện tại
+{ date: "2026-03-02", cylinders: [{ seri, total, tare }] }
 
-## Performance Considerations
+// phieu-can-gas-tare-db — tare memory theo seri
+{ "ABC123": "10.5", "DEF456": "12" }
 
-- **No framework overhead** - Vanilla JS lightweight
-- **No build step** - Direct execution
-- **Debounce auto-save** - No spam I/O
-- **CSS Grid/Flex** - GPU-accelerated layout
-- **Uncontrolled inputs** - Skip synthetic events
-- **Service worker cache** - Instant offline load
+// phieu-can-gas-history — lịch sử phiếu (max 50)
+[{ id, date, cylinders, totalGas, filledCount, savedAt }]
+```
+
+## CSS Modules
+
+| File | Nội dung |
+|------|---------|
+| `variables.css` | :root CSS custom properties, design tokens |
+| `base.css` | Reset, body, header, summary bar, offline bar |
+| `form.css` | Date picker, formula hint |
+| `components.css` | Cylinder cards, inputs, buttons, auto-save, gas-negative warning |
+| `confirm.css` | Custom confirm modal (thay thế `window.confirm()`) |
+| `history.css` | History modal, detail expand |
+| `toast.css` | Toast notification |
+| `responsive.css` | @media 768px, 1024px, 1440px |
+| `print.css` | @media print |
 
 ## Browser Support
 
-- iOS 12+
-- Android 4.4+
-- Chrome 40+
-- Firefox 25+
-- Safari 6+
-
-## Known Limitations
-
-- No server sync
-- Single device only
-- localStorage 5MB limit
-- No encryption
-- No authentication
+- iOS 12+ (Safari — hỗ trợ ES modules)
+- Android Chrome 61+
+- Desktop Chrome/Firefox/Edge hiện đại
 
 ---
 
----
-
-**Phiên Bản**: 1.0 | **Cập Nhật**: 02/03/2026
-**Repo**: kiettt23/petrolimex-calculator
+**Phiên Bản**: 1.2 | **Cập Nhật**: 02/03/2026
